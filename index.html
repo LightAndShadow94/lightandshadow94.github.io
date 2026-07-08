@@ -151,9 +151,9 @@
           <span class="hint">클릭=이동 · ★=해제</span>
         </div>
         <div class="sort-bar">
-          <button class="sortchip on" data-sort="date">시험일순</button>
+          <button class="sortchip on" data-sort="custom">선호도순</button>
           <button class="sortchip" data-sort="name">이름순</button>
-          <button class="sortchip" data-sort="custom">선호도순</button>
+          <button class="sortchip" data-sort="date">시험일순</button>
           <button class="dir-btn" id="dirBtn" title="오름/내림차순">↑</button>
         </div>
         <div class="sort-hint" id="sortHint" style="display:none;">≡ 를 잡고 드래그해서 원하는 순서로 놓으세요. 순서는 자동 저장돼요.</div>
@@ -197,7 +197,7 @@ var favOnly = false;
 var hidePast = false;
 var selectedDate = null;
 var view = new Date();
-var sortBy = lsGet("bng_sortby","date");
+var sortBy = lsGet("bng_sortby","custom");
 var sortDir = lsGet("bng_sortdir","asc");
 var customOrder = loadOrder();
 
