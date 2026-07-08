@@ -2,9 +2,11 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>빛과그림자 디자인교육원 · 입시 실기 D-DAY 캘린더</title>
 <style>
   :root{
-    --brand:#B41B34; --brand-dark:#8A1327; --accent:#E9700A;
+    --brand:#B41B34; --brand-dark:#8A1327; --accent:#E9700A; --jeongsi:#33A1E0;
     --bg:#FBF7F4; --card:#FFFFFF; --ink:#2B2B2B; --muted:#8A8A8A;
     --line:#ECE4DE; --sun:#D23B3B; --sat:#2F6FD1; --gold:#E9A100;
     --shadow:0 2px 10px rgba(0,0,0,.06);
@@ -12,23 +14,55 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   body{margin:0;font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;
        background:var(--bg);color:var(--ink);line-height:1.5;}
-    header{background:var(--brand);padding:15px 16px 12px;text-align:center;}
+  header{background:var(--brand);padding:15px 16px 12px;text-align:center;}
   header .logo{display:block;margin:0 auto;width:min(90%,480px);height:auto;}
   header .subtitle{color:#fff;font-size:12.5px;font-weight:800;letter-spacing:2px;margin:9px auto 0;padding-top:8px;max-width:min(90%,480px);border-top:1px solid rgba(255,255,255,.28);}
   .wrap{max-width:1000px;margin:0 auto;padding:16px 14px 60px;}
+  .loading{text-align:center;padding:50px 0;color:var(--muted);font-size:14px;}
+  .errbox{background:#FDECEC;border:1px solid #F3C0C0;color:#8a2a2a;font-size:13px;border-radius:12px;padding:14px;text-align:center;}
+  .preview-note{background:#FFF7E6;border:1px solid #FFE2A8;color:#8a6d1f;font-size:12px;border-radius:10px;padding:10px 12px;margin-bottom:14px;text-align:center;}
+
+  .searchbar{margin-bottom:10px;}
+  .searchbar input{width:100%;height:42px;border:1px solid var(--line);border-radius:8px;padding:0 14px;font-size:14px;background:#fff;color:var(--ink);outline:none;-webkit-appearance:none;}
+  .searchbar input:focus{border-color:var(--brand);}
+  .search-results{background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;}
+  .sr-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-top:1px solid var(--line);}
+  .sr-item:first-child{border-top:none;}
+  .sr-item:active,.sr-item:hover{background:#FBF2F3;}
+  .sr-badge{flex:0 0 auto;min-width:54px;text-align:center;font-weight:800;font-size:13px;color:#fff;border-radius:6px;padding:5px 4px;}
+  .sr-main{flex:1;min-width:0;}.sr-main .u{font-weight:700;font-size:14px;}.sr-main .d{font-size:12px;color:var(--muted);}
+  .sr-empty{padding:14px;text-align:center;color:var(--muted);font-size:13px;}
+
+  .filters{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:12px;padding:7px 14px;font-size:12.5px;cursor:pointer;color:var(--ink);}
+  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .chip.toggle.on{background:var(--gold);border-color:var(--gold);color:#fff;}
+  .legend{display:flex;gap:14px;align-items:center;font-size:11.5px;color:var(--muted);margin:2px 2px 14px;flex-wrap:wrap;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .lg-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .lg-dot.susi{background:var(--accent);} .lg-dot.jeongsi{background:var(--jeongsi);}
+  .lg-dot.fav{background:#fff;box-shadow:0 0 0 2px var(--gold);}
+
   .panel{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:16px;margin-bottom:16px;}
   .panel-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
   .panel-h h2{margin:0;font-size:15px;font-weight:800;display:flex;align-items:center;gap:6px;}
   .star-ico{color:var(--gold);} .hint{font-size:11.5px;color:var(--muted);}
+
+  .sort-bar{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;}.sortchip{border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px 10px;font-size:11.5px;cursor:pointer;color:var(--ink);}.sortchip.on{background:var(--brand-dark);color:#fff;border-color:var(--brand-dark);}.dir-btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--brand-dark);font-weight:800;margin-left:auto;}.drag-handle{flex:0 0 auto;cursor:grab;color:#C7BEB6;font-size:16px;padding:2px;touch-action:none;}.dday-item.sortable-ghost{opacity:.4;}.dday-item.sortable-chosen{border-color:var(--brand);}.sort-hint{font-size:11px;color:var(--muted);margin:-2px 2px 8px;}
   .dday-list{display:flex;flex-direction:column;gap:8px;}
-  .dday-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;}
+  .dday-item{position:relative;display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;}
+  .dday-item:hover{border-color:var(--brand);background:#FFFBFB;}
   .dday-badge{flex:0 0 auto;min-width:62px;text-align:center;font-weight:800;font-size:15px;padding:8px 6px;border-radius:7px;color:#fff;background:var(--brand);}
-  .dday-badge.mid{background:var(--accent);} .dday-badge.far{background:#9AA0A6;}
-  .dday-badge.today{background:#111;} .dday-badge.past{background:#C9C9C9;}
   .dday-main{flex:1;min-width:0;}
-  .dday-main .u{font-weight:700;font-size:14.5px;} .dday-main .d{font-size:12.5px;color:var(--muted);}
+  .dday-main .u{font-weight:700;font-size:14.5px;}
+  .dday-main .d{font-size:12.5px;color:var(--muted);}
   .dday-main .date{font-size:12px;color:var(--brand-dark);font-weight:600;margin-top:1px;}
+  .fav-x{flex:0 0 auto;background:none;border:none;font-size:22px;line-height:1;color:var(--gold);cursor:pointer;padding:2px 4px;}
+  .dday-hover{display:none;position:absolute;left:12px;right:12px;top:calc(100% - 2px);z-index:5;background:#fff;border:1px solid var(--brand);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.14);padding:10px 12px;font-size:12px;color:#5b4a33;white-space:pre-wrap;}
+  .dday-hover b{color:var(--accent);}
+  @media(hover:hover){ .dday-item:hover .dday-hover{display:block;} }
   .empty{color:var(--muted);font-size:13px;text-align:center;padding:18px 0;}
+
   .cal-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
   .cal-top .mtitle{font-size:16px;font-weight:800;}
   .navbtn{border:1px solid var(--line);background:#fff;border-radius:7px;width:38px;height:38px;font-size:18px;cursor:pointer;color:var(--brand);font-weight:800;}
@@ -45,8 +79,10 @@
   .cell.has-exam .dnum{color:var(--brand);font-weight:800;}
   .dots{margin-top:auto;display:flex;flex-wrap:wrap;gap:2px;}
   .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
-  .dot.fav{background:var(--gold);box-shadow:0 0 0 1.5px #fff;}
+  .dot.susi{background:var(--accent);} .dot.jeongsi{background:var(--jeongsi);}
+  .dot.fav{box-shadow:0 0 0 1.5px var(--gold);}
   .cnt{position:absolute;top:4px;right:5px;font-size:9.5px;background:var(--brand);color:#fff;border-radius:6px;padding:1px 5px;font-weight:700;}
+
   .detail{margin-top:16px;}
   .detail-h{font-size:14px;font-weight:800;margin-bottom:10px;color:var(--brand-dark);}
   .exam-card{border:1px solid var(--line);border-radius:9px;background:#fff;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);}
@@ -58,16 +94,13 @@
   .exam-dday{flex:0 0 auto;font-weight:800;font-size:14px;color:#fff;background:var(--brand);border-radius:7px;padding:6px 10px;}
   .favbtn{flex:0 0 auto;background:none;border:none;font-size:24px;cursor:pointer;color:#D8D2CC;line-height:1;padding:0;}
   .favbtn.on{color:var(--gold);}
+  .tag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;margin-top:5px;}
+  .tag.susi{background:#FCEEDF;color:#9c5406;} .tag.jeongsi{background:#E3F1FB;color:#175f92;}
   .req{margin-top:10px;padding:10px 12px;background:#FBF6EF;border:1px solid #F0E6D8;border-radius:7px;font-size:12.5px;color:#5b4a33;white-space:pre-wrap;}
   .req b{color:var(--accent);}
   .note{margin-top:8px;font-size:12px;color:var(--muted);white-space:pre-wrap;}
-  .searchbar{margin-bottom:10px;}.searchbar input{width:100%;height:42px;border:1px solid var(--line);border-radius:8px;padding:0 14px;font-size:14px;background:#fff;color:var(--ink);outline:none;-webkit-appearance:none;}.searchbar input:focus{border-color:var(--brand);}.search-results{background:var(--card);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);margin-bottom:14px;overflow:hidden;}.sr-item{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;border-top:1px solid var(--line);}.sr-item:first-child{border-top:none;}.sr-item:active,.sr-item:hover{background:#FBF2F3;}.sr-badge{flex:0 0 auto;min-width:54px;text-align:center;font-weight:800;font-size:13px;color:#fff;background:var(--brand);border-radius:6px;padding:5px 4px;}.sr-badge.mid{background:var(--accent);}.sr-badge.far{background:#9AA0A6;}.sr-badge.past{background:#C9C9C9;}.sr-badge.today{background:#111;}.sr-main{flex:1;min-width:0;}.sr-main .u{font-weight:700;font-size:14px;}.sr-main .d{font-size:12px;color:var(--muted);}.sr-empty{padding:14px;text-align:center;color:var(--muted);font-size:13px;}
-  .filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-  .chip{border:1px solid var(--line);background:#fff;border-radius:12px;padding:7px 14px;font-size:12.5px;cursor:pointer;color:var(--ink);}
-  .chip.on{background:var(--brand);color:#fff;border-color:var(--brand);}
+
   .foot{text-align:center;font-size:11.5px;color:var(--muted);margin-top:24px;line-height:1.7;}
-  .loading{text-align:center;padding:50px 0;color:var(--muted);font-size:14px;}
-  .errbox{background:#FDECEC;border:1px solid #F3C0C0;color:#8a2a2a;font-size:13px;border-radius:8px;padding:14px;text-align:center;}
   @media(min-width:720px){
     .layout{display:grid;grid-template-columns:1fr 1.15fr;gap:18px;align-items:start;}
     header .logo{width:min(74%,420px);} .cell .dnum{font-size:14px;}
@@ -84,18 +117,46 @@
   <div id="loading" class="loading">📅 시험 일정을 불러오는 중…</div>
 
   <div id="app" style="display:none;">
+    
+
     <div class="searchbar"><input id="search" type="search" placeholder="🔍 대학명·학과 검색 (예: 홍익, 시각디자인)" autocomplete="off"></div>
     <div id="searchResults" class="search-results" style="display:none;"></div>
-    <div class="filters">
-      <button class="chip on" data-filter="all">전체 보기</button>
-      <button class="chip" data-filter="fav">⭐ 관심 대학만</button>
+
+    <div class="filters" id="typeRow">
+      <button class="chip on" data-type="all">전체</button>
+      <button class="chip" data-type="수시">수시</button>
+      <button class="chip" data-type="정시">정시</button>
     </div>
+    <div class="filters" id="gunRow" style="display:none;">
+      <button class="chip on" data-gun="all">전체 군</button>
+      <button class="chip" data-gun="가">가군</button>
+      <button class="chip" data-gun="나">나군</button>
+      <button class="chip" data-gun="다">다군</button>
+    </div>
+    <div class="filters">
+      <button class="chip toggle" id="favChip">⭐ 관심만</button>
+      <button class="chip toggle" id="pastChip">🚫 지난 시험 숨기기</button>
+    </div>
+    <div class="legend">
+      <span><i class="lg-dot susi"></i>수시</span>
+      <span><i class="lg-dot jeongsi"></i>정시</span>
+      <span><i class="lg-dot fav"></i>관심</span>
+      <span style="margin-left:auto">디데이가 가까울수록 빨갛게 표시돼요</span>
+    </div>
+
     <div class="layout">
       <section class="panel">
         <div class="panel-h">
           <h2><span class="star-ico">★</span> 관심 대학 D-DAY</h2>
-          <span class="hint">가까운 순</span>
+          <span class="hint">클릭=이동 · ★=해제</span>
         </div>
+        <div class="sort-bar">
+          <button class="sortchip on" data-sort="date">시험일순</button>
+          <button class="sortchip" data-sort="name">이름순</button>
+          <button class="sortchip" data-sort="custom">선호도순</button>
+          <button class="dir-btn" id="dirBtn" title="오름/내림차순">↑</button>
+        </div>
+        <div class="sort-hint" id="sortHint" style="display:none;">≡ 를 잡고 드래그해서 원하는 순서로 놓으세요. 순서는 자동 저장돼요.</div>
         <div id="ddayList" class="dday-list"></div>
       </section>
       <section class="panel">
@@ -111,10 +172,12 @@
         <div class="cal-grid" id="calGrid" style="margin-top:6px;"></div>
       </section>
     </div>
+
     <div class="detail">
       <div class="detail-h" id="detailH">📅 날짜를 눌러 그 날의 실기 시험을 확인하세요</div>
       <div id="detailBody"></div>
     </div>
+
     <div class="foot">
       ⓒ 빛과그림자 디자인교육원 · 입시 실기 D-DAY 캘린더<br>
       선생님용 편집: 구글 시트 &nbsp;|&nbsp; 학생용: 보기 전용
@@ -123,49 +186,47 @@
 </div>
 
 <script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
-let DATA = [];
-let favs = loadFavs();
-let filter = "all";
-let search = "";
-let selectedDate = null;
-let view = new Date();
+var DATA = [];
+var favs = loadFavs();
+var search = "";
+var fType = "all";
+var fGun = "all";
+var favOnly = false;
+var hidePast = false;
+var selectedDate = null;
+var view = new Date();
+var sortBy = lsGet("bng_sortby","date");
+var sortDir = lsGet("bng_sortdir","asc");
+var customOrder = loadOrder();
 
-/* ===== 구글 시트에서 데이터 불러오기 ===== */
-/* ▼▼▼ 여기에 앱스스크립트 웹앱 주소(.../exec)를 붙여넣으세요 ▼▼▼ */
-var API_URL = (window.API_URL || "PASTE_YOUR_EXEC_URL_HERE");
-/* ▲▲▲ 예: https://script.google.com/macros/s/AKfycb..../exec ▲▲▲ */
-
-window.addEventListener("load", function(){
-  if(API_URL.indexOf("PASTE_YOUR")===0){
-    onErr({message:"API_URL을 아직 입력하지 않았어요. index.html 위쪽 API_URL에 /exec 주소를 넣어주세요."});
-    return;
-  }
-  window.__examCb = function(rows){ onData(rows); };
-  var sc = document.createElement("script");
-  sc.src = API_URL + (API_URL.indexOf("?")>=0?"&":"?") + "callback=__examCb&t=" + Date.now();
-  sc.onerror = function(){ onErr({message:"데이터를 불러오지 못했어요. API 주소와 배포 권한(모든 사용자)을 확인해 주세요."}); };
+var API_URL=(window.API_URL||"PASTE_YOUR_EXEC_URL_HERE");
+window.addEventListener("load",function(){
+  if(API_URL.indexOf("PASTE_YOUR")===0){ onErr({message:"API_URL을 아직 입력하지 않았어요. config.js에 /exec 주소를 넣어주세요."}); return; }
+  window.__examCb=function(rows){ onData(rows); };
+  var sc=document.createElement("script");
+  sc.src=API_URL+(API_URL.indexOf("?")>=0?"&":"?")+"callback=__examCb&t="+Date.now();
+  sc.onerror=function(){ onErr({message:"데이터를 불러오지 못했어요. API 주소와 배포 권한(모든 사용자)을 확인해 주세요."}); };
   document.head.appendChild(sc);
 });
+
 function onData(rows){
   DATA = rows || [];
-  DATA.forEach(function(d){ d.id = d.uni+"__"+d.dep+"__"+d.date; });
-  document.getElementById("loading").style.display = "none";
-  document.getElementById("app").style.display = "block";
-  bindUI();
-  initView();
-  renderAll();
+  DATA.forEach(function(d){ d.id = d.uni+"__"+d.dep+"__"+d.date+"__"+(d.type||"")+"__"+(d.gun||""); });
+  var l=document.getElementById("loading"); if(l) l.style.display="none";
+  document.getElementById("app").style.display="block";
+  bindUI(); initView(); renderAll();
 }
 function onErr(e){
-  document.getElementById("loading").innerHTML =
-    '<div class="errbox">일정을 불러오지 못했어요 😢<br>' + (e && e.message ? e.message : "") + '</div>';
+  document.getElementById("loading").innerHTML='<div class="errbox">일정을 불러오지 못했어요 😢<br>'+((e&&e.message)?e.message:"")+'</div>';
 }
 
 function loadFavs(){ try{ return JSON.parse(localStorage.getItem("bng_fav")||"[]"); }catch(e){ return []; } }
 function saveFavs(){ try{ localStorage.setItem("bng_fav", JSON.stringify(favs)); }catch(e){} }
 function isFav(id){ return favs.indexOf(id)>=0; }
 function toggleFav(id){
-  if(isFav(id)) favs = favs.filter(function(x){return x!==id;});
+  if(isFav(id)) favs=favs.filter(function(x){return x!==id;});
   else favs.push(id);
   saveFavs(); renderAll();
 }
@@ -173,46 +234,112 @@ function toggleFav(id){
 function today0(){ var t=new Date(); t.setHours(0,0,0,0); return t; }
 function parseD(s){ return new Date(s+"T00:00:00"); }
 function dday(dateStr){
-  var diff = Math.round((parseD(dateStr)-today0())/86400000);
-  if(diff>0)  return {label:"D-"+diff, days:diff, cls: diff<=30?"soon":diff<=90?"mid":"far"};
-  if(diff===0)return {label:"D-DAY", days:0, cls:"today"};
-  return {label:"D+"+(-diff), days:diff, cls:"past"};
+  var diff=Math.round((parseD(dateStr)-today0())/86400000);
+  if(diff>0)  return {label:"D-"+diff, days:diff};
+  if(diff===0)return {label:"D-DAY", days:0};
+  return {label:"D+"+(-diff), days:diff};
+}
+function ddayColor(days){
+  if(days<0)   return "#C9C9C9";   // 지난 시험
+  if(days===0) return "#111111";   // 당일
+  if(days<=3)  return "#A80D1E";   // 코앞 (진빨강)
+  if(days<=7)  return "#C8102E";
+  if(days<=14) return "#DE1F33";
+  if(days<=30) return "#E8502A";   // 붉은 주황
+  if(days<=60) return "#E9860A";   // 주황
+  if(days<=100)return "#E9A100";   // 호박
+  return "#9AA0A6";                // 회색 (먼 미래)
 }
 function fmtDate(s){
   var d=parseD(s), w=["일","월","화","수","목","금","토"][d.getDay()];
   return (d.getMonth()+1)+"월 "+d.getDate()+"일("+w+")";
 }
 function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
 
+function dispName(d){ return d.uni + (d.type==="정시" && d.gun ? "-"+d.gun+"군" : ""); }
 function matchSearch(d){ if(!search) return true; return (d.uni+" "+d.dep).toLowerCase().indexOf(search)>=0; }
-function sesc(x){return String(x).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
-function renderSearchResults(){
-  var box=document.getElementById("searchResults");
-  if(!search){ box.style.display="none"; box.innerHTML=""; return; }
-  var list=DATA.filter(matchSearch).slice().sort(function(a,b){return a.date<b.date?-1:1;});
-  box.style.display="block";
-  if(!list.length){ box.innerHTML='<div class="sr-empty">검색 결과가 없어요 😅</div>'; return; }
-  box.innerHTML=list.map(function(d){var dd=dday(d.date);
-    return '<div class="sr-item" data-date="'+d.date+'"><div class="sr-badge '+dd.cls+'">'+dd.label+'</div><div class="sr-main"><div class="u">'+sesc(d.uni)+'</div><div class="d">'+sesc(d.dep)+' · '+fmtDate(d.date)+'</div></div></div>';
-  }).join("");
-  box.querySelectorAll(".sr-item").forEach(function(it){
-    it.onclick=function(){var ds=it.dataset.date;view=parseD(ds);selectedDate=ds;renderCal();renderDetail();var el=document.querySelector(".detail");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});};
+function matchFilters(d){
+  if(favOnly && !isFav(d.id)) return false;
+  if(hidePast && dday(d.date).days<0) return false;
+  if(fType!=="all" && d.type!==fType) return false;
+  if(fType==="정시" && fGun!=="all" && d.gun!==fGun) return false;
+  if(!matchSearch(d)) return false;
+  return true;
+}
+function favVisible(d){
+  if(!isFav(d.id)) return false;
+  if(hidePast && dday(d.date).days<0) return false;
+  if(fType!=="all" && d.type!==fType) return false;
+  if(fType==="정시" && fGun!=="all" && d.gun!==fGun) return false;
+  if(!matchSearch(d)) return false;
+  return true;
+}
+
+function jumpTo(ds){
+  view=parseD(ds); selectedDate=ds; renderCal(); renderDetail();
+  var el=document.querySelector(".detail"); if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function lsGet(k,d){ try{ return localStorage.getItem(k)||d; }catch(e){ return d; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function loadOrder(){ try{ return JSON.parse(localStorage.getItem("bng_order")||"[]"); }catch(e){ return []; } }
+function saveOrder(){ try{ localStorage.setItem("bng_order", JSON.stringify(customOrder)); }catch(e){} }
+function sortFavList(list){
+  if(sortBy==="custom"){
+    var idx={}; customOrder.forEach(function(id,i){ idx[id]=i; });
+    list.sort(function(a,b){
+      var ia=(a.id in idx)?idx[a.id]:99999, ib=(b.id in idx)?idx[b.id]:99999;
+      if(ia!==ib) return ia-ib;
+      return dday(a.date).days-dday(b.date).days;
+    });
+    if(sortDir==="desc") list.reverse();
+    return;
+  }
+  list.sort(function(a,b){
+    var pa=dday(a.date).days<0?1:0, pb=dday(b.date).days<0?1:0;
+    if(pa!==pb) return pa-pb;
+    var cmp=(sortBy==="name")?a.uni.localeCompare(b.uni,"ko"):(dday(a.date).days-dday(b.date).days);
+    return sortDir==="asc"?cmp:-cmp;
   });
 }
 function renderDday(){
   var box=document.getElementById("ddayList");
-  var list=DATA.filter(function(d){return isFav(d.id);});
+  var _h=document.getElementById("sortHint"); if(_h) _h.style.display=(sortBy==="custom")?"block":"none";
+  var list=DATA.filter(favVisible);
   if(list.length===0){
-    box.innerHTML='<div class="empty">아직 관심 표시한 대학이 없어요.<br>아래 시험 카드의 ☆ 를 눌러 추가하세요!</div>';
+    box.innerHTML='<div class="empty">표시할 관심 대학이 없어요.<br>아래 시험 카드의 ☆ 를 눌러 추가하세요!</div>';
     return;
   }
-  list.sort(function(a,b){return dday(a.date).days-dday(b.date).days;});
+  sortFavList(list);
   box.innerHTML=list.map(function(d){
     var dd=dday(d.date);
-    return '<div class="dday-item"><div class="dday-badge '+dd.cls+'">'+dd.label+'</div>'
-      +'<div class="dday-main"><div class="u">'+esc(d.uni)+'</div><div class="d">'+esc(d.dep)+'</div>'
-      +'<div class="date">'+fmtDate(d.date)+'</div></div></div>';
+    var hover=(d.req?'<b>응시 조건 / 필요 성적</b>\n'+esc(d.req):'')+(d.note?(d.req?'\n\n':'')+'📌 '+esc(d.note):'');
+    if(!hover) hover="등록된 상세 정보가 없어요.";
+    return '<div class="dday-item" data-id="'+esc(d.id)+'" data-date="'+d.date+'">'+(sortBy==="custom"?'<span class="drag-handle" title="드래그해서 순서 변경">≡</span>':'')
+      +'<div class="dday-badge" style="background:'+ddayColor(dd.days)+'">'+dd.label+'</div>'
+      +'<div class="dday-main"><div class="u">'+esc(dispName(d))+'</div><div class="d">'+esc(d.dep)+'</div>'
+      +'<div class="date">'+fmtDate(d.date)+'</div></div>'
+      +'<button class="fav-x" data-fav="'+esc(d.id)+'" title="관심 해제">★</button>'
+      +'<div class="dday-hover">'+hover+'</div></div>';
   }).join("");
+  box.querySelectorAll(".fav-x").forEach(function(b){
+    b.addEventListener("click",function(ev){ ev.stopPropagation(); toggleFav(b.dataset.fav); });
+  });
+  box.querySelectorAll(".dday-item").forEach(function(it){
+    it.addEventListener("click",function(){ jumpTo(it.dataset.date); });
+  });
+  box.querySelectorAll(".drag-handle").forEach(function(h){
+    h.addEventListener("click",function(e){ e.stopPropagation(); });
+  });
+  if(sortBy==="custom" && window.Sortable){
+    if(box._sortable){ box._sortable.destroy(); }
+    box._sortable=Sortable.create(box,{handle:".drag-handle",animation:150,
+      onEnd:function(){
+        var ids=[]; box.querySelectorAll(".dday-item").forEach(function(it){ ids.push(it.dataset.id); });
+        customOrder=ids; saveOrder();
+      }});
+  } else if(box._sortable){ box._sortable.destroy(); box._sortable=null; }
 }
 
 function renderCal(){
@@ -224,21 +351,21 @@ function renderCal(){
   var first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
   var tstr=iso(today0()), cells="";
   for(var i=0;i<first;i++) cells+='<div class="cell blank"></div>';
-  for(var d=1;d<=days;d++){
-    var ds=iso(new Date(y,m,d)), dow=new Date(y,m,d).getDay();
-    var exams=DATA.filter(function(x){return x.date===ds && matchSearch(x);});
-    if(filter==="fav") exams=exams.filter(function(x){return isFav(x.id);});
+  for(var dnum=1;dnum<=days;dnum++){
+    var ds=iso(new Date(y,m,dnum)), dow=new Date(y,m,dnum).getDay();
+    var exams=DATA.filter(function(x){return x.date===ds && matchFilters(x);});
     var has=exams.length>0, cls="cell";
     if(dow===0)cls+=" sun"; if(dow===6)cls+=" sat";
     if(ds===tstr)cls+=" today"; if(ds===selectedDate)cls+=" selected"; if(has)cls+=" has-exam";
     var dots="";
-    if(has) dots='<div class="dots">'+exams.slice(0,4).map(function(x){
-      return '<span class="dot '+(isFav(x.id)?'fav':'')+'"></span>';}).join("")+'</div>';
+    if(has) dots='<div class="dots">'+exams.slice(0,6).map(function(x){
+      return '<span class="dot '+(x.type==="정시"?"jeongsi":"susi")+' '+(isFav(x.id)?"fav":"")+'"></span>';}).join("")+'</div>';
     var cnt=(has&&exams.length>1)?'<span class="cnt">'+exams.length+'</span>':"";
-    cells+='<div class="'+cls+'" data-date="'+ds+'">'+cnt+'<span class="dnum">'+d+'</span>'+dots+'</div>';
+    cells+='<div class="'+cls+'" data-date="'+ds+'">'+cnt+'<span class="dnum">'+dnum+'</span>'+dots+'</div>';
   }
+  var _t=first+days,_tr=(7-_t%7)%7; for(var _i=0;_i<_tr;_i++)cells+='<div class="cell blank"></div>';
   var grid=document.getElementById("calGrid");
-  var _t=first+days,_tr=(7-_t%7)%7;for(var _i=0;_i<_tr;_i++)cells+='<div class="cell blank"></div>';grid.innerHTML=cells;
+  grid.innerHTML=cells;
   grid.querySelectorAll(".cell[data-date]").forEach(function(c){
     c.addEventListener("click",function(){ selectedDate=c.dataset.date; renderCal(); renderDetail(); });
   });
@@ -247,18 +374,20 @@ function renderCal(){
 function renderDetail(){
   var h=document.getElementById("detailH"), body=document.getElementById("detailBody");
   if(!selectedDate){ h.textContent="📅 날짜를 눌러 그 날의 실기 시험을 확인하세요"; body.innerHTML=""; return; }
-  var exams=DATA.filter(function(x){return x.date===selectedDate && matchSearch(x);});
-  if(filter==="fav") exams=exams.filter(function(x){return isFav(x.id);});
+  var exams=DATA.filter(function(x){return x.date===selectedDate && matchFilters(x);});
   h.textContent=fmtDate(selectedDate)+" 실기 시험";
   if(exams.length===0){ body.innerHTML='<div class="empty">이 날은 표시할 시험이 없어요.</div>'; return; }
   exams.sort(function(a,b){return a.uni.localeCompare(b.uni,"ko");});
   body.innerHTML=exams.map(function(d){
     var dd=dday(d.date);
+    var tag=(d.type==="정시")
+      ? '<span class="tag jeongsi">정시'+(d.gun?' · '+d.gun+'군':'')+'</span>'
+      : '<span class="tag susi">수시</span>';
     return '<div class="exam-card"><div class="exam-top">'
       +'<button class="favbtn '+(isFav(d.id)?'on':'')+'" data-fav="'+esc(d.id)+'">'+(isFav(d.id)?'★':'☆')+'</button>'
-      +'<div class="info"><div class="uni">'+esc(d.uni)+'</div><div class="dep">'+esc(d.dep)+'</div>'
-      +'<div class="meta">'+fmtDate(d.date)+'</div></div>'
-      +'<div class="exam-dday">'+dd.label+'</div></div>'
+      +'<div class="info"><div class="uni">'+esc(dispName(d))+'</div><div class="dep">'+esc(d.dep)+'</div>'
+      +'<div class="meta">'+fmtDate(d.date)+'</div>'+tag+'</div>'
+      +'<div class="exam-dday" style="background:'+ddayColor(dd.days)+'">'+dd.label+'</div></div>'
       +(d.req?'<div class="req"><b>응시 조건 / 필요 성적</b>\n'+esc(d.req)+'</div>':"")
       +(d.note?'<div class="note">📌 '+esc(d.note)+'</div>':"")
       +'</div>';
@@ -268,8 +397,19 @@ function renderDetail(){
   });
 }
 
-function esc(s){ return String(s).replace(/[&<>"]/g,function(c){
-  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function renderSearchResults(){
+  var box=document.getElementById("searchResults");
+  if(!search){ box.style.display="none"; box.innerHTML=""; return; }
+  var list=DATA.filter(matchSearch).slice().sort(function(a,b){return a.date<b.date?-1:1;});
+  box.style.display="block";
+  if(!list.length){ box.innerHTML='<div class="sr-empty">검색 결과가 없어요 😅</div>'; return; }
+  box.innerHTML=list.map(function(d){var dd=dday(d.date);
+    return '<div class="sr-item" data-date="'+d.date+'"><div class="sr-badge" style="background:'+ddayColor(dd.days)+'">'+dd.label+'</div><div class="sr-main"><div class="u">'+esc(dispName(d))+'</div><div class="d">'+esc(d.dep)+' · '+fmtDate(d.date)+'</div></div></div>';
+  }).join("");
+  box.querySelectorAll(".sr-item").forEach(function(it){
+    it.addEventListener("click",function(){ jumpTo(it.dataset.date); });
+  });
+}
 
 function renderAll(){ renderDday(); renderCal(); renderDetail(); renderSearchResults(); }
 
@@ -279,14 +419,48 @@ function initView(){
 }
 
 function bindUI(){
-  document.getElementById("search").addEventListener("input",function(e){search=e.target.value.trim().toLowerCase();renderAll();});
   document.getElementById("prevM").onclick=function(){ view=new Date(view.getFullYear(),view.getMonth()-1,1); renderCal(); };
   document.getElementById("nextM").onclick=function(){ view=new Date(view.getFullYear(),view.getMonth()+1,1); renderCal(); };
   document.getElementById("todayBtn").onclick=function(){ view=new Date(); selectedDate=iso(today0()); renderCal(); renderDetail(); };
-  document.querySelectorAll(".chip").forEach(function(c){
-    c.onclick=function(){ document.querySelectorAll(".chip").forEach(function(x){x.classList.remove("on");});
-      c.classList.add("on"); filter=c.dataset.filter; renderAll(); };
+  document.getElementById("search").addEventListener("input",function(e){ search=e.target.value.trim().toLowerCase(); renderAll(); });
+
+  document.querySelectorAll("#typeRow .chip").forEach(function(c){
+    c.onclick=function(){
+      document.querySelectorAll("#typeRow .chip").forEach(function(x){x.classList.remove("on");});
+      c.classList.add("on"); fType=c.dataset.type;
+      var gr=document.getElementById("gunRow");
+      if(fType==="정시"){ gr.style.display="flex"; }
+      else{ gr.style.display="none"; fGun="all";
+        document.querySelectorAll("#gunRow .chip").forEach(function(x){x.classList.remove("on");});
+        document.querySelector('#gunRow .chip[data-gun="all"]').classList.add("on"); }
+      renderAll();
+    };
   });
+  document.querySelectorAll("#gunRow .chip").forEach(function(c){
+    c.onclick=function(){
+      document.querySelectorAll("#gunRow .chip").forEach(function(x){x.classList.remove("on");});
+      c.classList.add("on"); fGun=c.dataset.gun; renderAll();
+    };
+  });
+  document.getElementById("favChip").onclick=function(){
+    favOnly=!favOnly; this.classList.toggle("on",favOnly); renderAll();
+  };
+  document.getElementById("pastChip").onclick=function(){
+    hidePast=!hidePast; this.classList.toggle("on",hidePast); renderAll();
+  };
+
+  document.querySelectorAll(".sortchip").forEach(function(c){
+    c.onclick=function(){
+      document.querySelectorAll(".sortchip").forEach(function(x){x.classList.remove("on");});
+      c.classList.add("on"); sortBy=c.dataset.sort; lsSet("bng_sortby",sortBy); renderDday();
+    };
+  });
+  document.getElementById("dirBtn").onclick=function(){
+    sortDir=(sortDir==="asc")?"desc":"asc"; lsSet("bng_sortdir",sortDir);
+    this.textContent=(sortDir==="asc")?"↑":"↓"; renderDday();
+  };
+  document.querySelectorAll(".sortchip").forEach(function(x){ x.classList.toggle("on", x.dataset.sort===sortBy); });
+  document.getElementById("dirBtn").textContent=(sortDir==="asc")?"↑":"↓";
 }
 </script>
 </body>
