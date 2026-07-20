@@ -213,7 +213,10 @@ window.addEventListener("load",function(){
 
 function onData(rows){
   DATA = rows || [];
-  DATA.forEach(function(d){ d.id = d.uni+"__"+d.dep+"__"+d.date+"__"+(d.type||"")+"__"+(d.gun||""); });
+  DATA.forEach(function(d){
+    d.endDate = d.endDate || d.date; // 이전 버전 API의 단일 날짜 데이터도 지원
+    d.id = d.uni+"__"+d.dep+"__"+d.date+"__"+(d.type||"")+"__"+(d.gun||"")+(d.endDate!==d.date?"__"+d.endDate:"");
+  });
   var l=document.getElementById("loading"); if(l) l.style.display="none";
   document.getElementById("app").style.display="block";
   bindUI(); initView(); renderAll();
@@ -233,11 +236,13 @@ function toggleFav(id){
 
 function today0(){ var t=new Date(); t.setHours(0,0,0,0); return t; }
 function parseD(s){ return new Date(s+"T00:00:00"); }
-function dday(dateStr){
-  var diff=Math.round((parseD(dateStr)-today0())/86400000);
-  if(diff>0)  return {label:"D-"+diff, days:diff};
-  if(diff===0)return {label:"D-DAY", days:0};
-  return {label:"D+"+(-diff), days:diff};
+function dday(dateStr,endDateStr){
+  var start=parseD(dateStr), end=parseD(endDateStr||dateStr), today=today0();
+  var untilStart=Math.round((start-today)/86400000);
+  if(untilStart>0) return {label:"D-"+untilStart, days:untilStart};
+  if(today<=end) return {label:(dateStr===(endDateStr||dateStr))?"D-DAY":"진행중", days:0};
+  var sinceEnd=Math.round((today-end)/86400000);
+  return {label:"D+"+sinceEnd, days:-sinceEnd};
 }
 function ddayColor(days){
   if(days<0)   return "#C9C9C9";   // 지난 시험
@@ -254,14 +259,19 @@ function fmtDate(s){
   var d=parseD(s), w=["일","월","화","수","목","금","토"][d.getDay()];
   return (d.getMonth()+1)+"월 "+d.getDate()+"일("+w+")";
 }
+function fmtDateRange(d){
+  return (!d.endDate||d.endDate===d.date) ? fmtDate(d.date) : fmtDate(d.date)+" ~ "+fmtDate(d.endDate);
+}
 function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+function occursOn(d,ds){ return d.date<=ds && ds<=(d.endDate||d.date); }
 
 function dispName(d){ return d.uni + (d.type==="정시" && d.gun ? "-"+d.gun+"군" : ""); }
 function matchSearch(d){ if(!search) return true; return (d.uni+" "+d.dep).toLowerCase().indexOf(search)>=0; }
 function matchFilters(d){
   if(favOnly && !isFav(d.id)) return false;
-  if(hidePast && dday(d.date).days<0) return false;
+  if(hidePast && dday(d.date,d.endDate).days<0) return false;
   if(fType!=="all" && d.type!==fType) return false;
   if(fType==="정시" && fGun!=="all" && d.gun!==fGun) return false;
   if(!matchSearch(d)) return false;
@@ -269,7 +279,7 @@ function matchFilters(d){
 }
 function favVisible(d){
   if(!isFav(d.id)) return false;
-  if(hidePast && dday(d.date).days<0) return false;
+  if(hidePast && dday(d.date,d.endDate).days<0) return false;
   if(fType!=="all" && d.type!==fType) return false;
   if(fType==="정시" && fGun!=="all" && d.gun!==fGun) return false;
   if(!matchSearch(d)) return false;
@@ -291,15 +301,15 @@ function sortFavList(list){
     list.sort(function(a,b){
       var ia=(a.id in idx)?idx[a.id]:99999, ib=(b.id in idx)?idx[b.id]:99999;
       if(ia!==ib) return ia-ib;
-      return dday(a.date).days-dday(b.date).days;
+      return dday(a.date,a.endDate).days-dday(b.date,b.endDate).days;
     });
     if(sortDir==="desc") list.reverse();
     return;
   }
   list.sort(function(a,b){
-    var pa=dday(a.date).days<0?1:0, pb=dday(b.date).days<0?1:0;
+    var pa=dday(a.date,a.endDate).days<0?1:0, pb=dday(b.date,b.endDate).days<0?1:0;
     if(pa!==pb) return pa-pb;
-    var cmp=(sortBy==="name")?a.uni.localeCompare(b.uni,"ko"):(dday(a.date).days-dday(b.date).days);
+    var cmp=(sortBy==="name")?a.uni.localeCompare(b.uni,"ko"):(dday(a.date,a.endDate).days-dday(b.date,b.endDate).days);
     return sortDir==="asc"?cmp:-cmp;
   });
 }
@@ -313,13 +323,13 @@ function renderDday(){
   }
   sortFavList(list);
   box.innerHTML=list.map(function(d){
-    var dd=dday(d.date);
+    var dd=dday(d.date,d.endDate);
     var hover=(d.req?'<b>응시 조건 / 필요 성적</b>\n'+esc(d.req):'')+(d.note?(d.req?'\n\n':'')+'📌 '+esc(d.note):'');
     if(!hover) hover="등록된 상세 정보가 없어요.";
     return '<div class="dday-item" data-id="'+esc(d.id)+'" data-date="'+d.date+'">'+(sortBy==="custom"?'<span class="drag-handle" title="드래그해서 순서 변경">≡</span>':'')
       +'<div class="dday-badge" style="background:'+ddayColor(dd.days)+'">'+dd.label+'</div>'
       +'<div class="dday-main"><div class="u">'+esc(dispName(d))+'</div><div class="d">'+esc(d.dep)+'</div>'
-      +'<div class="date">'+fmtDate(d.date)+'</div></div>'
+      +'<div class="date">'+fmtDateRange(d)+'</div></div>'
       +'<button class="fav-x" data-fav="'+esc(d.id)+'" title="관심 해제">★</button>'
       +'<div class="dday-hover">'+hover+'</div></div>';
   }).join("");
@@ -353,7 +363,7 @@ function renderCal(){
   for(var i=0;i<first;i++) cells+='<div class="cell blank"></div>';
   for(var dnum=1;dnum<=days;dnum++){
     var ds=iso(new Date(y,m,dnum)), dow=new Date(y,m,dnum).getDay();
-    var exams=DATA.filter(function(x){return x.date===ds && matchFilters(x);});
+    var exams=DATA.filter(function(x){return occursOn(x,ds) && matchFilters(x);});
     var has=exams.length>0, cls="cell";
     if(dow===0)cls+=" sun"; if(dow===6)cls+=" sat";
     if(ds===tstr)cls+=" today"; if(ds===selectedDate)cls+=" selected"; if(has)cls+=" has-exam";
@@ -374,19 +384,19 @@ function renderCal(){
 function renderDetail(){
   var h=document.getElementById("detailH"), body=document.getElementById("detailBody");
   if(!selectedDate){ h.textContent="📅 날짜를 눌러 그 날의 실기 시험을 확인하세요"; body.innerHTML=""; return; }
-  var exams=DATA.filter(function(x){return x.date===selectedDate && matchFilters(x);});
+  var exams=DATA.filter(function(x){return occursOn(x,selectedDate) && matchFilters(x);});
   h.textContent=fmtDate(selectedDate)+" 실기 시험";
   if(exams.length===0){ body.innerHTML='<div class="empty">이 날은 표시할 시험이 없어요.</div>'; return; }
   exams.sort(function(a,b){return a.uni.localeCompare(b.uni,"ko");});
   body.innerHTML=exams.map(function(d){
-    var dd=dday(d.date);
+    var dd=dday(d.date,d.endDate);
     var tag=(d.type==="정시")
       ? '<span class="tag jeongsi">정시'+(d.gun?' · '+d.gun+'군':'')+'</span>'
       : '<span class="tag susi">수시</span>';
     return '<div class="exam-card"><div class="exam-top">'
       +'<button class="favbtn '+(isFav(d.id)?'on':'')+'" data-fav="'+esc(d.id)+'">'+(isFav(d.id)?'★':'☆')+'</button>'
       +'<div class="info"><div class="uni">'+esc(dispName(d))+'</div><div class="dep">'+esc(d.dep)+'</div>'
-      +'<div class="meta">'+fmtDate(d.date)+'</div>'+tag+'</div>'
+      +'<div class="meta">'+fmtDateRange(d)+'</div>'+tag+'</div>'
       +'<div class="exam-dday" style="background:'+ddayColor(dd.days)+'">'+dd.label+'</div></div>'
       +(d.req?'<div class="req"><b>응시 조건 / 필요 성적</b>\n'+esc(d.req)+'</div>':"")
       +(d.note?'<div class="note">📌 '+esc(d.note)+'</div>':"")
@@ -403,8 +413,8 @@ function renderSearchResults(){
   var list=DATA.filter(matchSearch).slice().sort(function(a,b){return a.date<b.date?-1:1;});
   box.style.display="block";
   if(!list.length){ box.innerHTML='<div class="sr-empty">검색 결과가 없어요 😅</div>'; return; }
-  box.innerHTML=list.map(function(d){var dd=dday(d.date);
-    return '<div class="sr-item" data-date="'+d.date+'"><div class="sr-badge" style="background:'+ddayColor(dd.days)+'">'+dd.label+'</div><div class="sr-main"><div class="u">'+esc(dispName(d))+'</div><div class="d">'+esc(d.dep)+' · '+fmtDate(d.date)+'</div></div></div>';
+  box.innerHTML=list.map(function(d){var dd=dday(d.date,d.endDate);
+    return '<div class="sr-item" data-date="'+d.date+'"><div class="sr-badge" style="background:'+ddayColor(dd.days)+'">'+dd.label+'</div><div class="sr-main"><div class="u">'+esc(dispName(d))+'</div><div class="d">'+esc(d.dep)+' · '+fmtDateRange(d)+'</div></div></div>';
   }).join("");
   box.querySelectorAll(".sr-item").forEach(function(it){
     it.addEventListener("click",function(){ jumpTo(it.dataset.date); });
@@ -414,7 +424,10 @@ function renderSearchResults(){
 function renderAll(){ renderDday(); renderCal(); renderDetail(); renderSearchResults(); }
 
 function initView(){
-  var up=DATA.map(function(d){return d.date;}).filter(function(ds){return parseD(ds)>=today0();}).sort();
+  var today=iso(today0());
+  var active=DATA.some(function(d){return occursOn(d,today);});
+  if(active){ view=today0(); return; }
+  var up=DATA.filter(function(d){return (d.endDate||d.date)>=today;}).map(function(d){return d.date;}).sort();
   if(up.length) view=parseD(up[0]);
 }
 
