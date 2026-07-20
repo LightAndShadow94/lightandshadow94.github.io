@@ -42,6 +42,7 @@
   .lg-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
   .lg-dot.susi{background:var(--accent);} .lg-dot.jeongsi{background:var(--jeongsi);}
   .lg-dot.fav{background:#fff;box-shadow:0 0 0 2px var(--gold);}
+  .lg-line{width:20px;height:4px;border-radius:999px;background:var(--accent);display:inline-block;}
 
   .panel{background:var(--card);border-radius:12px;box-shadow:var(--shadow);padding:16px;margin-bottom:16px;}
   .panel-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
@@ -70,17 +71,25 @@
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;} #calGrid{background:var(--line);}
   .dow{text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:4px 0;}
   .dow.sun{color:var(--sun);} .dow.sat{color:var(--sat);}
-  .cell{aspect-ratio:1/1;border:none;border-radius:0;background:#fff;padding:5px 6px;cursor:pointer;position:relative;display:flex;flex-direction:column;overflow:hidden;}
+  .cell{aspect-ratio:1/1;border:none;border-radius:0;background:#fff;padding:5px 6px;cursor:pointer;position:relative;display:flex;flex-direction:column;overflow:visible;}
   .cell.blank{background:#fff;cursor:default;}
   .cell .dnum{font-size:12.5px;font-weight:600;}
   .cell.sun .dnum{color:var(--sun);} .cell.sat .dnum{color:var(--sat);}
   .cell.today{box-shadow:inset 0 0 0 2px var(--brand);}
   .cell.selected{background:#FCEEF0;}
   .cell.has-exam .dnum{color:var(--brand);font-weight:800;}
-  .dots{margin-top:auto;display:flex;flex-wrap:wrap;gap:2px;}
+  .dots{margin-top:auto;display:flex;flex-wrap:wrap;gap:2px;position:relative;z-index:3;}
+  .cell.has-range .dots{margin-bottom:18px;}
   .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
   .dot.susi{background:var(--accent);} .dot.jeongsi{background:var(--jeongsi);}
   .dot.fav{box-shadow:0 0 0 1.5px var(--gold);}
+  .range-bars{position:absolute;inset:0;pointer-events:none;z-index:2;}
+  .range-bar{position:absolute;left:-1px;right:-1px;height:4px;background:var(--accent);}
+  .range-bar.jeongsi{background:var(--jeongsi);}
+  .range-bar.fav{box-shadow:0 0 0 1.5px var(--gold);z-index:1;}
+  .range-bar.cap-start{left:5px;border-radius:999px 0 0 999px;}
+  .range-bar.cap-end{right:5px;border-radius:0 999px 999px 0;}
+  .range-bar.cap-start.cap-end{border-radius:999px;}
   .cnt{position:absolute;top:4px;right:5px;font-size:9.5px;background:var(--brand);color:#fff;border-radius:6px;padding:1px 5px;font-weight:700;}
 
   .detail{margin-top:16px;}
@@ -141,6 +150,7 @@
       <span><i class="lg-dot susi"></i>수시</span>
       <span><i class="lg-dot jeongsi"></i>정시</span>
       <span><i class="lg-dot fav"></i>관심</span>
+      <span><i class="lg-line"></i>기간 일정</span>
       <span style="margin-left:auto">디데이가 가까울수록 빨갛게 표시돼요</span>
     </div>
 
@@ -352,6 +362,26 @@ function renderDday(){
   } else if(box._sortable){ box._sortable.destroy(); box._sortable=null; }
 }
 
+function buildRangeLanes(y,m){
+  var monthStart=iso(new Date(y,m,1));
+  var monthEnd=iso(new Date(y,m+1,0));
+  var ranges=DATA.filter(function(d){
+    return d.endDate>d.date && d.endDate>=monthStart && d.date<=monthEnd && matchFilters(d);
+  }).slice().sort(function(a,b){
+    if(a.date!==b.date) return a.date<b.date?-1:1;
+    if(a.endDate!==b.endDate) return a.endDate<b.endDate?-1:1;
+    return a.id.localeCompare(b.id,"ko");
+  });
+  var laneEnds=[], laneById={};
+  ranges.forEach(function(d){
+    var lane=0;
+    while(lane<laneEnds.length && laneEnds[lane]>=d.date) lane++;
+    laneById[d.id]=lane;
+    laneEnds[lane]=d.endDate;
+  });
+  return laneById;
+}
+
 function renderCal(){
   var y=view.getFullYear(), m=view.getMonth();
   document.getElementById("mtitle").textContent=y+"년 "+(m+1)+"월";
@@ -359,19 +389,29 @@ function renderCal(){
   document.getElementById("dowRow").innerHTML=dows.map(function(d,i){
     return '<div class="dow '+(i===0?'sun':i===6?'sat':'')+'">'+d+'</div>';}).join("");
   var first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate();
+  var rangeLanes=buildRangeLanes(y,m);
   var tstr=iso(today0()), cells="";
   for(var i=0;i<first;i++) cells+='<div class="cell blank"></div>';
   for(var dnum=1;dnum<=days;dnum++){
     var ds=iso(new Date(y,m,dnum)), dow=new Date(y,m,dnum).getDay();
     var exams=DATA.filter(function(x){return occursOn(x,ds) && matchFilters(x);});
+    var rangeExams=exams.filter(function(x){return x.endDate>x.date;});
+    var singleExams=exams.filter(function(x){return x.endDate===x.date;});
     var has=exams.length>0, cls="cell";
     if(dow===0)cls+=" sun"; if(dow===6)cls+=" sat";
-    if(ds===tstr)cls+=" today"; if(ds===selectedDate)cls+=" selected"; if(has)cls+=" has-exam";
+    if(ds===tstr)cls+=" today"; if(ds===selectedDate)cls+=" selected"; if(has)cls+=" has-exam"; if(rangeExams.length)cls+=" has-range";
     var dots="";
-    if(has) dots='<div class="dots">'+exams.slice(0,6).map(function(x){
+    if(singleExams.length) dots='<div class="dots">'+singleExams.slice(0,6).map(function(x){
       return '<span class="dot '+(x.type==="정시"?"jeongsi":"susi")+' '+(isFav(x.id)?"fav":"")+'"></span>';}).join("")+'</div>';
+    var bars="";
+    if(rangeExams.length) bars='<div class="range-bars">'+rangeExams.map(function(x){
+      var lane=rangeLanes[x.id];
+      if(lane===undefined||lane>2) return "";
+      var capStart=(ds===x.date||dow===0), capEnd=(ds===x.endDate||dow===6);
+      return '<span class="range-bar '+(x.type==="정시"?"jeongsi":"susi")+' '+(isFav(x.id)?"fav ":"")+(capStart?"cap-start ":"")+(capEnd?"cap-end":"")+'" style="bottom:'+(4+lane*6)+'px"></span>';
+    }).join("")+'</div>';
     var cnt=(has&&exams.length>1)?'<span class="cnt">'+exams.length+'</span>':"";
-    cells+='<div class="'+cls+'" data-date="'+ds+'">'+cnt+'<span class="dnum">'+dnum+'</span>'+dots+'</div>';
+    cells+='<div class="'+cls+'" data-date="'+ds+'">'+cnt+'<span class="dnum">'+dnum+'</span>'+dots+bars+'</div>';
   }
   var _t=first+days,_tr=(7-_t%7)%7; for(var _i=0;_i<_tr;_i++)cells+='<div class="cell blank"></div>';
   var grid=document.getElementById("calGrid");
