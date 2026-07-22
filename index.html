@@ -22,6 +22,31 @@
   .errbox{background:#FDECEC;border:1px solid #F3C0C0;color:#8a2a2a;font-size:13px;border-radius:12px;padding:14px;text-align:center;}
   .preview-note{background:#FFF7E6;border:1px solid #FFE2A8;color:#8a6d1f;font-size:12px;border-radius:10px;padding:10px 12px;margin-bottom:14px;text-align:center;}
 
+  .notice-bar{width:100%;height:44px;border:1px solid #F0D6DB;border-radius:9px;background:#fff;box-shadow:var(--shadow);margin:0 0 12px;padding:0 12px;display:flex;align-items:center;gap:9px;color:var(--ink);cursor:pointer;text-align:left;}
+  .notice-bar:hover,.notice-bar:focus-visible{border-color:var(--brand);outline:none;background:#FFFBFB;}
+  .notice-label{flex:0 0 auto;background:var(--brand);color:#fff;border-radius:5px;padding:2px 7px;font-size:10.5px;font-weight:800;letter-spacing:.2px;}
+  .notice-latest{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700;}
+  .notice-date{flex:0 0 auto;color:var(--muted);font-size:11px;}
+  .notice-arrow{flex:0 0 auto;color:var(--brand);font-size:18px;line-height:1;}
+  .notice-modal[hidden]{display:none;}
+  .notice-modal{position:fixed;inset:0;z-index:1000;background:rgba(22,16,17,.52);padding:18px;display:flex;align-items:center;justify-content:center;}
+  .notice-dialog{width:min(100%,620px);max-height:min(82vh,720px);overflow:hidden;background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);display:flex;flex-direction:column;}
+  .notice-dialog-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line);}
+  .notice-dialog-h h2{margin:0;font-size:17px;color:var(--brand-dark);}
+  .notice-close{width:36px;height:36px;border:0;border-radius:50%;background:#F7F2EF;color:var(--ink);font-size:23px;line-height:1;cursor:pointer;}
+  .notice-close:hover,.notice-close:focus-visible{background:#F2E3E6;outline:2px solid var(--brand);outline-offset:1px;}
+  .notice-list{overflow:auto;padding:8px 18px 18px;}
+  .notice-item{border-bottom:1px solid var(--line);}
+  .notice-item-btn{width:100%;border:0;background:#fff;padding:14px 2px;display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:10px;text-align:left;cursor:pointer;color:var(--ink);}
+  .notice-item-btn:hover,.notice-item-btn:focus-visible{color:var(--brand);outline:none;}
+  .notice-item-title{font-size:14px;font-weight:750;min-width:0;}
+  .notice-item-date{font-size:11.5px;color:var(--muted);white-space:nowrap;}
+  .notice-item-arrow{font-size:15px;color:var(--muted);transition:transform .15s ease;}
+  .notice-item-btn[aria-expanded="true"] .notice-item-arrow{transform:rotate(180deg);}
+  .notice-item-body{padding:0 2px 16px;color:#5B514C;font-size:13px;line-height:1.7;white-space:pre-wrap;}
+  .notice-empty{padding:34px 0;text-align:center;color:var(--muted);font-size:13px;}
+  body.notice-open{overflow:hidden;}
+
   .searchbar{margin-bottom:10px;}
   .searchbar input{width:100%;height:42px;border:1px solid var(--line);border-radius:8px;padding:0 14px;font-size:14px;background:#fff;color:var(--ink);outline:none;-webkit-appearance:none;}
   .searchbar input:focus{border-color:var(--brand);}
@@ -114,6 +139,12 @@
     .layout{display:grid;grid-template-columns:1fr 1.15fr;gap:18px;align-items:start;}
     header .logo{width:min(74%,420px);} .cell .dnum{font-size:14px;}
   }
+  @media(max-width:480px){
+    .notice-date{display:none;}
+    .notice-modal{padding:12px;align-items:flex-end;}
+    .notice-dialog{max-height:86vh;border-radius:14px 14px 8px 8px;}
+    .notice-item-btn{grid-template-columns:1fr auto auto;}
+  }
 </style>
 </head>
 <body>
@@ -126,7 +157,22 @@
   <div id="loading" class="loading">📅 시험 일정을 불러오는 중…</div>
 
   <div id="app" style="display:none;">
-    
+    <button id="noticeBar" class="notice-bar" type="button" aria-haspopup="dialog" aria-controls="noticeModal" style="display:none;">
+      <span class="notice-label">공지</span>
+      <span id="noticeLatest" class="notice-latest"></span>
+      <span id="noticeLatestDate" class="notice-date"></span>
+      <span class="notice-arrow" aria-hidden="true">›</span>
+    </button>
+
+    <div id="noticeModal" class="notice-modal" role="dialog" aria-modal="true" aria-labelledby="noticeTitle" hidden>
+      <div class="notice-dialog">
+        <div class="notice-dialog-h">
+          <h2 id="noticeTitle">공지사항</h2>
+          <button id="noticeClose" class="notice-close" type="button" aria-label="공지사항 닫기">×</button>
+        </div>
+        <div id="noticeList" class="notice-list"></div>
+      </div>
+    </div>
 
     <div class="searchbar"><input id="search" type="search" placeholder="🔍 대학명·학과 검색 (예: 홍익, 시각디자인)" autocomplete="off"></div>
     <div id="searchResults" class="search-results" style="display:none;"></div>
@@ -199,6 +245,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
 var DATA = [];
+var NOTICES = [];
+var noticeReturnFocus = null;
 var favs = loadFavs();
 var search = "";
 var fType = "all";
@@ -214,22 +262,23 @@ var customOrder = loadOrder();
 var API_URL=(window.API_URL||"PASTE_YOUR_EXEC_URL_HERE");
 window.addEventListener("load",function(){
   if(API_URL.indexOf("PASTE_YOUR")===0){ onErr({message:"API_URL을 아직 입력하지 않았어요. config.js에 /exec 주소를 넣어주세요."}); return; }
-  window.__examCb=function(rows){ onData(rows); };
+  window.__examCb=function(payload){ onData(payload); };
   var sc=document.createElement("script");
-  sc.src=API_URL+(API_URL.indexOf("?")>=0?"&":"?")+"callback=__examCb&t="+Date.now();
+  sc.src=API_URL+(API_URL.indexOf("?")>=0?"&":"?")+"callback=__examCb&notices=1&t="+Date.now();
   sc.onerror=function(){ onErr({message:"데이터를 불러오지 못했어요. API 주소와 배포 권한(모든 사용자)을 확인해 주세요."}); };
   document.head.appendChild(sc);
 });
 
-function onData(rows){
-  DATA = rows || [];
+function onData(payload){
+  DATA = Array.isArray(payload) ? payload : ((payload&&payload.exams)||[]);
+  NOTICES = Array.isArray(payload) ? [] : ((payload&&payload.notices)||[]);
   DATA.forEach(function(d){
     d.endDate = d.endDate || d.date; // 이전 버전 API의 단일 날짜 데이터도 지원
     d.id = d.uni+"__"+d.dep+"__"+d.date+"__"+(d.type||"")+"__"+(d.gun||"")+(d.endDate!==d.date?"__"+d.endDate:"");
   });
   var l=document.getElementById("loading"); if(l) l.style.display="none";
   document.getElementById("app").style.display="block";
-  bindUI(); initView(); renderAll();
+  renderNotices(); bindUI(); initView(); renderAll();
 }
 function onErr(e){
   document.getElementById("loading").innerHTML='<div class="errbox">일정을 불러오지 못했어요 😢<br>'+((e&&e.message)?e.message:"")+'</div>';
@@ -274,6 +323,56 @@ function fmtDateRange(d){
 }
 function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+
+function fmtNoticeDate(s,shortForm){
+  var d=parseD(s);
+  return shortForm ? (d.getMonth()+1)+"."+d.getDate()+"." : d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0");
+}
+
+function renderNotices(){
+  var bar=document.getElementById("noticeBar");
+  var list=document.getElementById("noticeList");
+  if(!NOTICES.length){
+    bar.style.display="none";
+    list.innerHTML='<div class="notice-empty">등록된 공지사항이 없어요.</div>';
+    return;
+  }
+  bar.style.display="flex";
+  document.getElementById("noticeLatest").textContent=NOTICES[0].title;
+  document.getElementById("noticeLatestDate").textContent=fmtNoticeDate(NOTICES[0].date,true);
+  list.innerHTML=NOTICES.map(function(n,i){
+    var open=i===0;
+    return '<div class="notice-item"><button class="notice-item-btn" type="button" aria-expanded="'+(open?'true':'false')+'" aria-controls="noticeBody'+i+'">'
+      +'<span class="notice-item-title">'+esc(n.title)+'</span>'
+      +'<span class="notice-item-date">'+fmtNoticeDate(n.date,false)+'</span>'
+      +'<span class="notice-item-arrow" aria-hidden="true">⌄</span></button>'
+      +'<div class="notice-item-body" id="noticeBody'+i+'"'+(open?'':' hidden')+'>'+(n.body?esc(n.body):'상세 내용이 없습니다.')+'</div></div>';
+  }).join("");
+  list.querySelectorAll(".notice-item-btn").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var body=document.getElementById(btn.getAttribute("aria-controls"));
+      var willOpen=btn.getAttribute("aria-expanded")!=="true";
+      btn.setAttribute("aria-expanded",willOpen?"true":"false");
+      body.hidden=!willOpen;
+    });
+  });
+}
+
+function openNoticeModal(){
+  noticeReturnFocus=document.activeElement;
+  var modal=document.getElementById("noticeModal");
+  modal.hidden=false;
+  document.body.classList.add("notice-open");
+  document.getElementById("noticeClose").focus();
+}
+
+function closeNoticeModal(){
+  var modal=document.getElementById("noticeModal");
+  if(modal.hidden) return;
+  modal.hidden=true;
+  document.body.classList.remove("notice-open");
+  if(noticeReturnFocus&&noticeReturnFocus.focus) noticeReturnFocus.focus();
+}
 
 function occursOn(d,ds){ return d.date<=ds && ds<=(d.endDate||d.date); }
 
@@ -472,6 +571,14 @@ function initView(){
 }
 
 function bindUI(){
+  document.getElementById("noticeBar").onclick=openNoticeModal;
+  document.getElementById("noticeClose").onclick=closeNoticeModal;
+  document.getElementById("noticeModal").addEventListener("click",function(e){
+    if(e.target===this) closeNoticeModal();
+  });
+  document.addEventListener("keydown",function(e){
+    if(e.key==="Escape") closeNoticeModal();
+  });
   document.getElementById("prevM").onclick=function(){ view=new Date(view.getFullYear(),view.getMonth()-1,1); renderCal(); };
   document.getElementById("nextM").onclick=function(){ view=new Date(view.getFullYear(),view.getMonth()+1,1); renderCal(); };
   document.getElementById("todayBtn").onclick=function(){ view=new Date(); selectedDate=iso(today0()); renderCal(); renderDetail(); };
