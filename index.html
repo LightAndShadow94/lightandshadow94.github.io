@@ -135,8 +135,8 @@
   .req-content>*+*{margin-top:8px;}
   .req-text{white-space:pre-wrap;line-height:1.55;}
   .req-table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:7px;}
-  .req-table{width:100%;min-width:360px;border-collapse:separate;border-spacing:0;border:1px solid #E7D8C5;border-radius:7px;overflow:hidden;background:#fff;font-variant-numeric:tabular-nums;}
-  .req-table th,.req-table td{padding:7px 9px;border-right:1px solid #EDE1D2;border-bottom:1px solid #EDE1D2;text-align:left;vertical-align:middle;white-space:nowrap;}
+  .req-table{box-sizing:border-box;width:100%;min-width:0;border-collapse:separate;border-spacing:0;border:1px solid #E7D8C5;border-radius:7px;overflow:hidden;background:#fff;font-variant-numeric:tabular-nums;}
+  .req-table th,.req-table td{padding:7px 9px;border-right:1px solid #EDE1D2;border-bottom:1px solid #EDE1D2;text-align:left;vertical-align:middle;white-space:normal;word-break:keep-all;overflow-wrap:anywhere;}
   .req-table th{background:#F3E9DC;color:#714B31;font-weight:800;}
   .req-table th:not(:first-child),.req-table td:not(:first-child){text-align:right;}
   .req-table th:last-child,.req-table td:last-child{border-right:0;}
@@ -153,6 +153,7 @@
     .notice-modal{padding:12px;align-items:flex-end;}
     .notice-dialog{max-height:86vh;border-radius:14px 14px 8px 8px;}
     .notice-item-btn{grid-template-columns:1fr auto auto;}
+    .req-table th,.req-table td{padding:6px 7px;}
   }
 </style>
 </head>
